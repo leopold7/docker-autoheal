@@ -30,6 +30,7 @@ services:
 ## 效果
 当已经添加了 `label` 为  `autoheal=true` 的容器，经过 `healthcheck` 检测为 `unhealthy` 时，会尝试执行重启操作，并执行钉钉webhook `DING_WEBHOOK_URL`。
 
+![](https://cdn.jsdelivr.net/gh/leopold7/CDN2@main/static/images/begs/2022/12/20221215140751.png)
 
 声名：本项目基于 [willfarrell/docker-autoheal V1.2.0](https://github.com/willfarrell/docker-autoheal)，对于（除钉钉魔改外的）其他配置，请参考原说明文档：
 ---

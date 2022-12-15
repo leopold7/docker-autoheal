@@ -6,7 +6,7 @@ P.S.: 本项目为 [willfarrell/docker-autoheal](https://github.com/willfarrell/
 
 ## 步骤
 1. 在 `.env` 文件中填入你的钉钉机器人`webhook`地址。例如：`DING_WEBHOOK_URL=https://oapi.dingtalk.com/robot/send?access_token=xxxxxx`
-2. 在钉钉机器人中设置 `自定义关键词` 为 `autoheal`。如图：
+2. 在钉钉机器人中设置 `自定义关键词` 为 `健康检查`。如图：
    ![设置自定义关键词](https://cdn.jsdelivr.net/gh/leopold7/CDN2@main/static/images/begs/2022/12/20221215113311.png)
 3. 在需要监控的容器中添加一个 `label` 为 `autoheal=true`，且容器支持 `healthcheck`，例如：
 ```yaml

@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
 set -e
 # shellcheck disable=2039
@@ -8,6 +8,7 @@ DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 UNIX_SOCK=""
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
 WEBHOOK_URL=${WEBHOOK_URL:-""}
+DING_WEBHOOK_URL=${DING_WEBHOOK_URL:-""}
 
 # only use unix domain socket if no TCP endpoint is defined
 case "${DOCKER_SOCK}" in
@@ -65,6 +66,12 @@ notify_webhook() {
     # execute webhook requests as background process to prevent healer from blocking
     curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL
   fi
+
+  if [ -n "$DING_WEBHOOK_URL" ]
+  then
+    # execute ding webhook requests as background process to prevent healer from blocking
+    curl -X POST -H "Content-type: application/json" -d "$(generate_ding_webhook_payload $text)"  $DING_WEBHOOK_URL
+  fi
 }
 
 # https://towardsdatascience.com/proper-ways-to-pass-environment-variables-in-json-for-curl-post-f797d2698bf3
@@ -74,6 +81,19 @@ generate_webhook_payload() {
 {
   "text":"$text"
 } 
+EOF
+}
+
+generate_ding_webhook_payload() {
+  local text="$@"
+  cat <<EOF
+{
+  "msgtype": "markdown",
+  "markdown": {
+    "title" : "健康检查",
+    "text" : "$text"
+  }
+}
 EOF
 }
 
@@ -102,7 +122,7 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
     do
       # shellcheck disable=2039
       CONTAINER_SHORT_ID=${CONTAINER_ID:0:12}
-      DATE=$(date +%d-%m-%Y" "%H:%M:%S)
+      DATE=$(date +%Y-%m-%d" "%H:%M:%S)
 
       if [ "$CONTAINER_NAME" = "null" ]
       then
@@ -115,9 +135,28 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
         if ! restart_container "$CONTAINER_ID" "$TIMEOUT"
         then
           echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
-          notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!" &
-        else 
-          notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container!" &
+
+          # execute webhook requests as background process to prevent healer from blocking
+          if [ -n "$WEBHOOK_URL" ]
+          then
+            notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container!" &
+          fi
+          if [ -n "$DING_WEBHOOK_URL" ]
+          then
+            notify_webhook "# 健康检查\n ---\n > 您有一个容器的健康状态异常，尝试重启<font color=#CE0000 face='黑体' size=3>失败</font>!\n - 名称：${CONTAINER_NAME:1}\n - 标识：${CONTAINER_SHORT_ID}\n - 时间：$DATE " &
+          fi
+
+        else
+          # execute webhook requests as background process to prevent healer from blocking
+          if [ -n "$WEBHOOK_URL" ]
+          then
+            notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!" &
+          fi
+          if [ -n "$DING_WEBHOOK_URL" ]
+          then
+            notify_webhook "# 健康检查\n ---\n > 您有一个容器的健康状态异常，尝试重启<font color=#00BB00 face='黑体' size=3>成功</font>!\n - 名称：${CONTAINER_NAME:1}\n - 标识：${CONTAINER_SHORT_ID}\n - 时间：$DATE " &
+          fi
+
         fi
       fi
     done

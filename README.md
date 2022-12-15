@@ -1,3 +1,39 @@
+# Docker Autoheal 钉钉机器人魔改版
+P.S.: 本项目为 [willfarrell/docker-autoheal](https://github.com/willfarrell/docker-autoheal) 的魔改版，主要修改了：
+* 新增环境变量 `DING_WEBHOOK_URL`，用于适配钉钉机器人需要构造的`json`参数
+* `Dockerfile` 添加 `阿里云`源，加速国内构建
+* `docker-compose` 启动，引入`.env`
+
+## 步骤
+1. 在 `.env` 文件中填入你的钉钉机器人`webhook`地址。例如：`DING_WEBHOOK_URL=https://oapi.dingtalk.com/robot/send?access_token=xxxxxx`
+2. 在钉钉机器人中设置 `自定义关键词` 为 `autoheal`。如图：
+   ![设置自定义关键词](https://cdn.jsdelivr.net/gh/leopold7/CDN2@main/static/images/begs/2022/12/20221215113311.png)
+3. 在需要监控的容器中添加一个 `label` 为 `autoheal=true`，且容器支持 `healthcheck`，例如：
+```yaml
+version: '3.9'
+services:
+    web-app:
+        image: web-app:latest
+        restart: unless-stopped
+        ports:
+            - "8080:8080"
+        labels:
+            - autoheal=true
+        healthcheck:
+           test: [ "CMD", "curl", "-fs", "http://localhost:8080/xxx/ping" ]
+           interval: 30s
+           timeout: 10s
+           retries: 3
+           start_period: 120s
+```
+
+## 效果
+当已经添加了 `label` 为  `autoheal=true` 的容器，经过 `healthcheck` 检测为 `unhealthy` 时，会尝试执行重启操作，并执行钉钉webhook `DING_WEBHOOK_URL`。
+
+
+声名：本项目基于 [willfarrell/docker-autoheal V1.2.0](https://github.com/willfarrell/docker-autoheal)，对于（除钉钉魔改外的）其他配置，请参考原说明文档：
+---
+
 # Docker Autoheal
 
 Monitor and restart unhealthy docker containers. 

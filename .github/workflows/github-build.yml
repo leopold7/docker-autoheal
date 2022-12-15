@@ -32,11 +32,11 @@ jobs:
 
       - if: github.ref == 'refs/heads/main'
         name: Conditional(Set tag as `latest`)
-        run: echo "tag=stendan7/autoheal:latest" >> $GITHUB_ENV
+        run: echo "tag=stendan/autoheal:latest" >> $GITHUB_ENV
 
       - if: startsWith(github.ref, 'refs/tags/')
         name: Conditional(Set tag as `{version}`)
-        run: echo "tag=stendan7/autoheal:${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+        run: echo "tag=stendan/autoheal:${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
       -
         name: Build and push

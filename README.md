@@ -5,10 +5,9 @@ P.S.: 本项目为 [willfarrell/docker-autoheal](https://github.com/willfarrell/
 * `docker-compose` 启动，引入`.env`
 
 ## 步骤
-1. 在 `.env` 文件中填入你的钉钉机器人`webhook`地址。例如：`DING_WEBHOOK_URL=https://oapi.dingtalk.com/robot/send?access_token=xxxxxx`
-2. 在钉钉机器人中设置 `自定义关键词` 为 `健康检查`。如图：
+1. 在钉钉机器人中设置 `自定义关键词` 为 `健康检查`。如图：
    ![设置自定义关键词](https://cdn.jsdelivr.net/gh/leopold7/CDN2@main/static/images/begs/2022/12/20221215113311.png)
-3. 在需要监控的容器中添加一个 `label` 为 `autoheal=true`，且容器支持 `healthcheck`，例如：
+2. 在需要监控的容器中添加一个 `label` 为 `autoheal=true`，且容器支持 `healthcheck`，例如：
 ```yaml
 version: '3.9'
 services:
@@ -26,6 +25,19 @@ services:
            retries: 3
            start_period: 120s
 ```
+
+## Docker 启动
+```shell
+ docker run -d \
+    --name autoheal \
+    --restart=always \
+    -e AUTOHEAL_CONTAINER_LABEL=autoheal \
+    -e DING_WEBHOOK_URL=https://oapi.dingtalk.com/robot/send?access_token=xxxxxx \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /etc/localtime:/etc/localtime:ro
+    stendan/autoheal
+```
+请自行替换 `DING_WEBHOOK_URL` 的值
 
 ## 效果
 当已经添加了 `label` 为  `autoheal=true` 的容器，经过 `healthcheck` 检测为 `unhealthy` 时，会尝试执行重启操作，并执行钉钉webhook `DING_WEBHOOK_URL`。

@@ -4,7 +4,7 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
-    image: stendan7/autoheal:latest
+    image: stendan/autoheal:latest
     restart: always
     container_name: autoheal
     environment:
